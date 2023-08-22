@@ -467,7 +467,8 @@ def calc_cam_cone_pts_3d(polar_deg, azimuth_deg, radius_m, fov_deg):
 
 def run_demo(
         device_idx=_GPU_INDEX,
-        ckpt='105000.ckpt',
+        # ckpt='105000.ckpt',
+        ckpt='zero123-xl.ckpt', 
         config='configs/sd-objaverse-finetune-c_concat-256.yaml'):
 
     print('sys.argv:', sys.argv)
@@ -654,7 +655,7 @@ def run_demo(
                                     0.0, 180.0, 0.0),
                        inputs=preset_inputs, outputs=preset_outputs)
 
-    demo.launch(enable_queue=True, share=True)
+    demo.launch(enable_queue=True, server_name="0.0.0.0", share=True, show_error=True)
 
 
 if __name__ == '__main__':
