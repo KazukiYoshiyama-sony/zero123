@@ -348,11 +348,11 @@ def main_run(models, device, cam_vis, return_what,
     if H >= W:
         h = 512
         w = h * W // H
-        w = int(w / 8 + 1) * 8
+        w = w + (w % 8)
     else:
         w = 512
         h = w * H // W
-        h = int(h / 8 + 1) * 8
+        h = h + (h % 8)
 
     input_im = preprocess_image(models, raw_im, preprocess, w, h)
     print(f"Automatic resize (W, H) from ({W}, {H}) to ({w}, {h})")    
