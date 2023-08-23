@@ -349,10 +349,12 @@ def main_run(models, device, cam_vis, return_what,
         h = 512
         w = h * W // H
         w = w + (w % 8)
+        w -= (w // 8 % 2)
     else:
         w = 512
         h = w * H // W
         h = h + (h % 8)
+        h -= (h // 8 % 2)
 
     input_im = preprocess_image(models, raw_im, preprocess, w, h)
     print(f"Automatic resize (W, H) from ({W}, {H}) to ({w}, {h})")    
@@ -564,7 +566,7 @@ def run_demo(
                 with gr.Accordion('Advanced options', open=False):
                     scale_slider = gr.Slider(0, 30, value=3, step=1,
                                              label='Diffusion guidance scale')
-                    steps_slider = gr.Slider(5, 200, value=75, step=5,
+                    steps_slider = gr.Slider(5, 200, value=50, step=5,
                                              label='Number of diffusion inference steps')
 
                 with gr.Row():
