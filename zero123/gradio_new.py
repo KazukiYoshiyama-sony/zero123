@@ -273,7 +273,7 @@ class CameraVisualizer:
         return fig
 
 
-def preprocess_image(models, input_im, preprocess):
+def preprocess_image(models, input_im, preprocess, w, h):
     '''
     :param input_im (PIL Image).
     :return input_im (H, W, 3) array in [0, 1].
@@ -287,7 +287,7 @@ def preprocess_image(models, input_im, preprocess):
         input_im = (input_im / 255.0).astype(np.float32)
         # (H, W, 3) array in [0, 1].
     else:
-        input_im = input_im.resize([256, 256], Image.Resampling.LANCZOS)
+        input_im = input_im.resize([w, h], Image.Resampling.LANCZOS)
         input_im = np.asarray(input_im, dtype=np.float32) / 255.0
         # (H, W, 4) array in [0, 1].
 
@@ -309,6 +309,7 @@ def preprocess_image(models, input_im, preprocess):
     return input_im
 
 
+@torch.no_grad()
 def main_run(models, device, cam_vis, return_what,
              x=0.0, y=0.0, z=0.0,
              raw_im=None, preprocess=True,
@@ -342,7 +343,19 @@ def main_run(models, device, cam_vis, return_what,
     else:
         print('Safety check passed.')
 
-    input_im = preprocess_image(models, raw_im, preprocess)
+    W, H = raw_im.size
+    # address OOM
+    if H >= W:
+        h = 512
+        w = h * W // H
+        w = int(w / 32 + 1) * 32
+    else:
+        w = 512
+        h = w * H // W
+        h = int(h / 32 + 1) * 32
+
+    input_im = preprocess_image(models, raw_im, preprocess, w, h)
+    print(f"Automatic resize (W, H) from ({W}, {H}) to ({w}, {h})")    
 
     # if np.random.rand() < 0.3:
     #     description = ('Unfortunately, a human, a face, or potential NSFW content was detected, '
@@ -389,7 +402,7 @@ def main_run(models, device, cam_vis, return_what,
         output_ims = []
         for x_sample in x_samples_ddim:
             x_sample = 255.0 * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
-            output_ims.append(Image.fromarray(x_sample.astype(np.uint8)))
+            output_ims.append(Image.fromarray(x_sample.astype(np.uint8)).resize((W, H), Image.Resampling.LANCZOS))
 
         description = None
 
@@ -520,7 +533,7 @@ def run_demo(
                 image_block = gr.Image(type='pil', image_mode='RGBA',
                                        label='Input image of single object')
                 preprocess_chk = gr.Checkbox(
-                    True, label='Preprocess image automatically (remove background and recenter object)')
+                    False, label='Preprocess image automatically (remove background and recenter object)')
                 # info='If enabled, the uploaded image will be preprocessed to remove the background and recenter the object by cropping and/or padding as necessary. '
                 # 'If disabled, the image will be used as-is, *BUT* a fully transparent or white background is required.'),
 
